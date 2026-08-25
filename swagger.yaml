@@ -1,7 +1,10 @@
 openapi: 3.0.4
 info:
   title: SMC-동영상포탈 PIP 연동 API
-  description: SMR의 프로그램, 클립 메타데이터를 조회하는 API 입니다.
+  description: SMR의 프로그램, 클립 메타데이터를 조회하는 API 입니다. <br>
+    - 운영시 5분에 1회 호출을 권장합니다. <br>
+    - feed정보는 최대 1000개로 제한됩니다.
+    
   contact:
     email: yerimlee@smartmediarep.com
   version: 2.6.0
@@ -21,7 +24,7 @@ paths:
       summary: 프로그램 메타 조회
       description: |
        프로그램 메타데이터를 조회합니다. <br>
-       빈값(필드)은 모두 emptyString으로 반환합니다.
+       필드의 빈값은 기본적으로 emptyString으로 반환합니다. 예외케이스의 경우 각 필드의 description에서 설명합니다.
       parameters:
         - name: platform
           in: query
@@ -66,7 +69,9 @@ paths:
               - all
       responses:
         '200':
-          description: successful operation
+          description: |
+            successful operation
+            (참고: 실제 응답 Content-Type이 text/html로 오나, 바디는 JSON 형식입니다)
           content:
             application/json:
               schema:
@@ -74,6 +79,10 @@ paths:
                 items:
                   $ref: '#/components/schemas/Program'
             text/html: 
+              schema: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/Program'
         '405':
           description: Invalid status value
         5XX: 
@@ -86,7 +95,7 @@ paths:
       summary: 클립메타 조회
       description:  |
        클립 메타데이터를 조회합니다. <br>
-       빈값(필드)은 모두 emptyString으로 반환합니다.
+       필드의 빈값은 기본적으로 emptyString으로 반환합니다. 예외케이스의 경우 각 필드의 description에서 설명합니다.
       parameters:
         - name: platform
           in: query
@@ -115,7 +124,8 @@ paths:
               - CW
         - name: programid
           in: query
-          description: 필터링하고자하는 프로그램ID 입니다. (programinfo에서 정의된 ID)
+          description: 필터링하고자하는 프로그램ID 입니다. (programinfo에서 정의된 ID) <br>
+            ⚠️ **프로그램값이 있으면 type=recent가 적용되지 않고, 해당 프로그램 클립 최대 1,000개가 전달됩니다.**
           required: false
           schema:
             type: string
@@ -137,10 +147,17 @@ paths:
               - all
       responses:
         '200':
-          description: successful operation
+          description: |
+            successful operation
+            (참고: 실제 응답 Content-Type이 text/html로 오나, 바디는 JSON 형식입니다)
           content:
             application/json:
               schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Clip'
+            text/html: 
+              schema: 
                 type: array
                 items:
                   $ref: '#/components/schemas/Clip'
@@ -370,6 +387,8 @@ components:
           type: string
           maxLength: 500
           example: https://fs.jtbc.co.kr/joydata/CP00000001/prog/media/voyage/img/20220106_105527_957.jpg
+          description: 프로그램 썸네일 이미지 URL <br>
+            (JPG, 권장사이즈 - 최소사이즈 – 152*152)
         programcoverimg:
           type: string
           maxLength: 500
@@ -634,19 +653,20 @@ components:
             (JPG, 16:9 권장사이즈 - 1280*720 최소사이즈 - 640*360)
         playtime:
           type: string
+          pattern: '^[0-9]+$'
           example: "60"
           description: |
-            플레이 시간 (단위: 초)
+            플레이 시간 (단위: 초) - 숫자 형태로 표시(Integer)
         starttime:
           type: string
           example: "0"
           description: | 
-            구간재생 시작 시간 (단위: 초)
+            구간재생 시작 시간 (단위: 초) - 숫자 형태로 표시(Integer)
         endtime:
           type: string
           example: "0"
           description: |
-            구간재생 종료 시간 (단위: 초)
+            구간재생 종료 시간 (단위: 초) - 숫자 형태로 표시(Integer)
         targetnation:
           type: string
           maxLength: 1000
@@ -768,7 +788,8 @@ components:
         contentnumber:
           type: string
           example: 267
-          description: 회차 번호
+          description: 회차 번호 - 숫자 형태로 표시(Integer) <br>
+            정보가 없을 시 "0"으로 전달
         sportscomment:
           type: string
           example: ""
