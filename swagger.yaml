@@ -1,718 +1,777 @@
----
-swagger: "2.0"
+openapi: 3.0.4
 info:
-  description: "This is a sample server Petstore server.  You can find out more about\
-    \ Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).\
-    \  For this sample, you can use the api key `special-key` to test the authorization\
-    \ filters."
-  version: "1.0.5"
-  title: "Swagger Petstore"
-  termsOfService: "http://swagger.io/terms/"
+  title: SMC-동영상포탈 PIP 연동 API
+  description: SMR의 프로그램, 클립 메타데이터를 조회하는 API 입니다.
   contact:
-    email: "apiteam@swagger.io"
-  license:
-    name: "Apache 2.0"
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "petstore.swagger.io"
-basePath: "/v2"
+    email: yerimlee@smartmediarep.com
+  version: 2.6.0
+servers:
+  - url: https://smc-api-production.smartmediarep.com/api/v3
 tags:
-- name: "pet"
-  description: "Everything about your Pets"
-  externalDocs:
-    description: "Find out more"
-    url: "http://swagger.io"
-- name: "store"
-  description: "Access to Petstore orders"
-- name: "user"
-  description: "Operations about user"
-  externalDocs:
-    description: "Find out more about our store"
-    url: "http://swagger.io"
-schemes:
-- "https"
-- "http"
+  - name: program
+    description: 프로그램 정보 (programinfo)
+  - name: clip
+    description: 클립영상 정보 (clipmediainfo)
+    
 paths:
-  /pet/{petId}/uploadImage:
-    post:
-      tags:
-      - "pet"
-      summary: "uploads an image"
-      description: ""
-      operationId: "uploadFile"
-      consumes:
-      - "multipart/form-data"
-      produces:
-      - "application/json"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to update"
-        required: true
-        type: "integer"
-        format: "int64"
-      - name: "additionalMetadata"
-        in: "formData"
-        description: "Additional data to pass to server"
-        required: false
-        type: "string"
-      - name: "file"
-        in: "formData"
-        description: "file to upload"
-        required: false
-        type: "file"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/ApiResponse"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet:
-    post:
-      tags:
-      - "pet"
-      summary: "Add a new pet to the store"
-      description: ""
-      operationId: "addPet"
-      consumes:
-      - "application/json"
-      - "application/xml"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Pet object that needs to be added to the store"
-        required: true
-        schema:
-          $ref: "#/definitions/Pet"
-      responses:
-        405:
-          description: "Invalid input"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-    put:
-      tags:
-      - "pet"
-      summary: "Update an existing pet"
-      description: ""
-      operationId: "updatePet"
-      consumes:
-      - "application/json"
-      - "application/xml"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Pet object that needs to be added to the store"
-        required: true
-        schema:
-          $ref: "#/definitions/Pet"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-        405:
-          description: "Validation exception"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet/findByStatus:
+  /programinfo:
     get:
       tags:
-      - "pet"
-      summary: "Finds Pets by status"
-      description: "Multiple status values can be provided with comma separated strings"
-      operationId: "findPetsByStatus"
-      produces:
-      - "application/json"
-      - "application/xml"
+        - program
+      summary: 프로그램 메타 조회
+      description: |
+       프로그램 메타데이터를 조회합니다. <br>
+       빈값(필드)은 모두 emptyString으로 반환합니다.
       parameters:
-      - name: "status"
-        in: "query"
-        description: "Status values that need to be considered for filter"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-          enum:
-          - "available"
-          - "pending"
-          - "sold"
-          default: "available"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "successful operation"
+        - name: platform
+          in: query
+          description: 호출하시는 플랫폼의 코드값입니다.
+          required: true
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid status value"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /pet/findByTags:
+            type: string
+            enum:
+              - smr
+        - name: cpid
+          in: query
+          description: 필터링하고자하는 방송사의 코드값입니다.
+          required: false
+          schema:
+            type: string
+            enum:
+              - C1
+              - C2
+              - C3
+              - CC
+              - CD
+              - CE
+              - CF
+              - CJ
+              - CK
+              - CW
+        - name: programid
+          in: query
+          description: 필터링하고자하는 프로그램ID 입니다.
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: recent - 수정일 기준 최근 72시간, all - 전체 ** 최초 연동만 호출
+          required: false
+          schema:
+            type: string
+            default: recent
+            enum:
+              - recent
+              - all
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Program'
+            text/html: 
+        '405':
+          description: Invalid status value
+        5XX: 
+          description: Unexpected error
+
+  /clipmediainfo:
     get:
       tags:
-      - "pet"
-      summary: "Finds Pets by tags"
-      description: "Multiple tags can be provided with comma separated strings. Use\
-        \ tag1, tag2, tag3 for testing."
-      operationId: "findPetsByTags"
-      produces:
-      - "application/json"
-      - "application/xml"
+        - clip
+      summary: 클립메타 조회
+      description:  |
+       클립 메타데이터를 조회합니다. <br>
+       빈값(필드)은 모두 emptyString으로 반환합니다.
       parameters:
-      - name: "tags"
-        in: "query"
-        description: "Tags to filter by"
-        required: true
-        type: "array"
-        items:
-          type: "string"
-        collectionFormat: "multi"
-      responses:
-        200:
-          description: "successful operation"
+        - name: platform
+          in: query
+          description: 호출하시는 플랫폼의 코드값입니다.
+          required: true
           schema:
-            type: "array"
-            items:
-              $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid tag value"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-      deprecated: true
-  /pet/{petId}:
-    get:
-      tags:
-      - "pet"
-      summary: "Find pet by ID"
-      description: "Returns a single pet"
-      operationId: "getPetById"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet to return"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        200:
-          description: "successful operation"
+            type: string
+            enum:
+              - smr
+        - name: cpid
+          in: query
+          description: 필터링하고자하는 방송사의 코드값입니다.
+          required: false
           schema:
-            $ref: "#/definitions/Pet"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-      security:
-      - api_key: []
-    post:
-      tags:
-      - "pet"
-      summary: "Updates a pet in the store with form data"
-      description: ""
-      operationId: "updatePetWithForm"
-      consumes:
-      - "application/x-www-form-urlencoded"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "petId"
-        in: "path"
-        description: "ID of pet that needs to be updated"
-        required: true
-        type: "integer"
-        format: "int64"
-      - name: "name"
-        in: "formData"
-        description: "Updated name of the pet"
-        required: false
-        type: "string"
-      - name: "status"
-        in: "formData"
-        description: "Updated status of the pet"
-        required: false
-        type: "string"
-      responses:
-        405:
-          description: "Invalid input"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-    delete:
-      tags:
-      - "pet"
-      summary: "Deletes a pet"
-      description: ""
-      operationId: "deletePet"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "api_key"
-        in: "header"
-        required: false
-        type: "string"
-      - name: "petId"
-        in: "path"
-        description: "Pet id to delete"
-        required: true
-        type: "integer"
-        format: "int64"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Pet not found"
-      security:
-      - petstore_auth:
-        - "write:pets"
-        - "read:pets"
-  /store/order:
-    post:
-      tags:
-      - "store"
-      summary: "Place an order for a pet"
-      description: ""
-      operationId: "placeOrder"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "order placed for purchasing the pet"
-        required: true
-        schema:
-          $ref: "#/definitions/Order"
-      responses:
-        200:
-          description: "successful operation"
+            type: string
+            enum:
+              - C1
+              - C2
+              - C3
+              - CC
+              - CD
+              - CE
+              - CF
+              - CJ
+              - CK
+              - CW
+        - name: programid
+          in: query
+          description: 필터링하고자하는 프로그램ID 입니다. (programinfo에서 정의된 ID)
+          required: false
           schema:
-            $ref: "#/definitions/Order"
-        400:
-          description: "Invalid Order"
-  /store/order/{orderId}:
-    get:
-      tags:
-      - "store"
-      summary: "Find purchase order by ID"
-      description: "For valid response try integer IDs with value >= 1 and <= 10.\
-        \ Other values will generated exceptions"
-      operationId: "getOrderById"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "orderId"
-        in: "path"
-        description: "ID of pet that needs to be fetched"
-        required: true
-        type: "integer"
-        maximum: 10
-        minimum: 1
-        format: "int64"
-      responses:
-        200:
-          description: "successful operation"
+            type: string
+        - name: clipid
+          in: query
+          description: 필터링하고자하는 클립ID 입니다.
+          required: false
           schema:
-            $ref: "#/definitions/Order"
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Order not found"
-    delete:
-      tags:
-      - "store"
-      summary: "Delete purchase order by ID"
-      description: "For valid response try integer IDs with positive integer value.\
-        \ Negative or non-integer values will generate API errors"
-      operationId: "deleteOrder"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "orderId"
-        in: "path"
-        description: "ID of the order that needs to be deleted"
-        required: true
-        type: "integer"
-        minimum: 1
-        format: "int64"
-      responses:
-        400:
-          description: "Invalid ID supplied"
-        404:
-          description: "Order not found"
-  /store/inventory:
-    get:
-      tags:
-      - "store"
-      summary: "Returns pet inventories by status"
-      description: "Returns a map of status codes to quantities"
-      operationId: "getInventory"
-      produces:
-      - "application/json"
-      parameters: []
-      responses:
-        200:
-          description: "successful operation"
+              type: string
+        - name: type
+          in: query
+          description: recent - 수정일 기준 최근 72시간, all - 전체 ** 최초 연동만 호출
+          required: false
           schema:
-            type: "object"
-            additionalProperties:
-              type: "integer"
-              format: "int32"
-      security:
-      - api_key: []
-  /user/createWithArray:
-    post:
-      tags:
-      - "user"
-      summary: "Creates list of users with given input array"
-      description: ""
-      operationId: "createUsersWithArrayInput"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "List of user object"
-        required: true
-        schema:
-          type: "array"
-          items:
-            $ref: "#/definitions/User"
+            type: string
+            default: recent
+            enum:
+              - recent
+              - all
       responses:
-        default:
-          description: "successful operation"
-  /user/createWithList:
-    post:
-      tags:
-      - "user"
-      summary: "Creates list of users with given input array"
-      description: ""
-      operationId: "createUsersWithListInput"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "List of user object"
-        required: true
-        schema:
-          type: "array"
-          items:
-            $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-  /user/{username}:
-    get:
-      tags:
-      - "user"
-      summary: "Get user by user name"
-      description: ""
-      operationId: "getUserByName"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "The name that needs to be fetched. Use user1 for testing. "
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "successful operation"
-          schema:
-            $ref: "#/definitions/User"
-        400:
-          description: "Invalid username supplied"
-        404:
-          description: "User not found"
-    put:
-      tags:
-      - "user"
-      summary: "Updated user"
-      description: "This can only be done by the logged in user."
-      operationId: "updateUser"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "name that need to be updated"
-        required: true
-        type: "string"
-      - in: "body"
-        name: "body"
-        description: "Updated user object"
-        required: true
-        schema:
-          $ref: "#/definitions/User"
-      responses:
-        400:
-          description: "Invalid user supplied"
-        404:
-          description: "User not found"
-    delete:
-      tags:
-      - "user"
-      summary: "Delete user"
-      description: "This can only be done by the logged in user."
-      operationId: "deleteUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "path"
-        description: "The name that needs to be deleted"
-        required: true
-        type: "string"
-      responses:
-        400:
-          description: "Invalid username supplied"
-        404:
-          description: "User not found"
-  /user/login:
-    get:
-      tags:
-      - "user"
-      summary: "Logs user into the system"
-      description: ""
-      operationId: "loginUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - name: "username"
-        in: "query"
-        description: "The user name for login"
-        required: true
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "The password for login in clear text"
-        required: true
-        type: "string"
-      responses:
-        200:
-          description: "successful operation"
-          headers:
-            X-Expires-After:
-              type: "string"
-              format: "date-time"
-              description: "date in UTC when token expires"
-            X-Rate-Limit:
-              type: "integer"
-              format: "int32"
-              description: "calls per hour allowed by the user"
-          schema:
-            type: "string"
-        400:
-          description: "Invalid username/password supplied"
-  /user/logout:
-    get:
-      tags:
-      - "user"
-      summary: "Logs out current logged in user session"
-      description: ""
-      operationId: "logoutUser"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters: []
-      responses:
-        default:
-          description: "successful operation"
-  /user:
-    post:
-      tags:
-      - "user"
-      summary: "Create user"
-      description: "This can only be done by the logged in user."
-      operationId: "createUser"
-      consumes:
-      - "application/json"
-      produces:
-      - "application/json"
-      - "application/xml"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "Created user object"
-        required: true
-        schema:
-          $ref: "#/definitions/User"
-      responses:
-        default:
-          description: "successful operation"
-securityDefinitions:
-  api_key:
-    type: "apiKey"
-    name: "api_key"
-    in: "header"
-  petstore_auth:
-    type: "oauth2"
-    authorizationUrl: "https://petstore.swagger.io/oauth/authorize"
-    flow: "implicit"
-    scopes:
-      read:pets: "read your pets"
-      write:pets: "modify pets in your account"
-definitions:
-  ApiResponse:
-    type: "object"
-    properties:
-      code:
-        type: "integer"
-        format: "int32"
-      type:
-        type: "string"
-      message:
-        type: "string"
-  Category:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      name:
-        type: "string"
-    xml:
-      name: "Category"
-  Pet:
-    type: "object"
-    required:
-    - "name"
-    - "photoUrls"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      category:
-        $ref: "#/definitions/Category"
-      name:
-        type: "string"
-        example: "doggie"
-      photoUrls:
-        type: "array"
-        xml:
-          wrapped: true
-        items:
-          type: "string"
-          xml:
-            name: "photoUrl"
-      tags:
-        type: "array"
-        xml:
-          wrapped: true
-        items:
-          xml:
-            name: "tag"
-          $ref: "#/definitions/Tag"
-      status:
-        type: "string"
-        description: "pet status in the store"
-        enum:
-        - "available"
-        - "pending"
-        - "sold"
-    xml:
-      name: "Pet"
-  Tag:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      name:
-        type: "string"
-    xml:
-      name: "Tag"
-  Order:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      petId:
-        type: "integer"
-        format: "int64"
-      quantity:
-        type: "integer"
-        format: "int32"
-      shipDate:
-        type: "string"
-        format: "date-time"
-      status:
-        type: "string"
-        description: "Order Status"
-        enum:
-        - "placed"
-        - "approved"
-        - "delivered"
-      complete:
-        type: "boolean"
-    xml:
-      name: "Order"
-  User:
-    type: "object"
-    properties:
-      id:
-        type: "integer"
-        format: "int64"
-      username:
-        type: "string"
-      firstName:
-        type: "string"
-      lastName:
-        type: "string"
-      email:
-        type: "string"
-      password:
-        type: "string"
-      phone:
-        type: "string"
-      userStatus:
-        type: "integer"
-        format: "int32"
-        description: "User Status"
-    xml:
-      name: "User"
-externalDocs:
-  description: "Find out more about Swagger"
-  url: "http://swagger.io"
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Clip'
+        '405':
+          description: Invalid status value
+        5XX: 
+          description: Unexpected error
+  
+components:
+  schemas:
+    Program:
+      type: object
+      required:
+        - programid
+        - brandcode
+        - corporator
+        - corporatorcode
+        - programcode
+        - category
+        - section
+        - targetage
+        - channelid
+        - weekcode
+        - regdate
+        - modifydate
+        - cpid
+        - programposterimg
+        - programthumimg
+        - masterclipid
+        - isuse
+      properties:
+        programid:
+          type: string
+          maxLength: 100
+          example: J01_PR10011045
+          description: 프로그램ID (채널ID+ "_" + 방송사 원 ProgramdID) *채널ID는 아래정의
+        brandcode:
+          type: string
+          maxLength: 100
+          example: 260
+          description: 방송사 코드
+        corporator:
+          type: string
+          maxLength: 50
+          example: JTBC
+          description: 각 방송사의 명칭
+        eventcode:
+          type: string
+          maxLength: 50
+          example: ""
+          description: 이벤트코드 (의미있는 이벤트 영문타이틀 - olympic2018)
+        corporatorcode:
+          type: string
+          maxLength: 50
+          example: jtbc
+          description: 각 방송사의 사용 명칭(소문자 알파벳, 공백 특수문자 없음) <br>
+                       sbs / mbc / tvchosun / channela / jtbc / mbn / cjenm
+        programcode:
+          type: string
+          maxLength: 50
+          example: voyage
+          description: 프로그램코드 (의미있는 프로그램 영문타이틀)
+        title:
+          type: string
+          maxLength: 500
+          example: JTBC Voyage(봐야지)
+          description: 프로그램명
+        synopsis:
+          type: string
+          maxLength: 4000
+          example: "놓치면 안 될 핫클립부터\r\n내가 보고 싶은 스타의 모습까지 쏙쏙!\r\nJTBC 봐야지! 지금 봐야지 =3\r\n\r\n"
+          description: 프로그램 설명
+        category:
+          type: string
+          maxLength: 2
+          example: "01"
+          description: | 
+              카테고리
+               - 01: TV
+               - 02: 영화
+               - 03: 스포츠
+        section:
+          type: string
+          maxLength: 2
+          example: "02"
+          description: |
+            방송 장르
+             - 01: 드라마
+             - 02: 예능
+             - 03: 교양
+             - 04: 뉴스
+             - 05: 스포츠
+             - 06: 어린이
+             - 07: 라디오
+             - 08: 뮤직
+             - 09: 라이프
+             - 10: 뉴스(smr pip용)
+             - 11: 애니메이션
+             - 90: 뉴스(방송사 홈페이지, pooq Live 송출용, SMR 광고서버전용) |
+            
+            영화장르
+              - M1: 드라마
+              - M2: 액션/SF
+              - M3: 로맨스/멜로
+              - M4: 코미디
+              - M5: 범죄/스릴러
+              - M6: 공포/호러
+              - M7: 가족
+        subcategory:
+          type: string
+          maxLength: 50
+          example: ""
+          description: 각 사별 추가 카테고리 구분. 필요에 따라 추가 (예. 패션, 자동차, EPL 등)
+        targetage:
+          type: string
+          example: "0"
+          description: |
+            시청가능나이 - 숫자 형태로 표시
+              - 0: all
+              - 7
+              - 12
+              - 15
+              - 19
+        channelid:
+          type: string
+          maxLength: 3
+          example: J01
+          description: 등록 채널 구분 코드 (정산분류용)
+        searchkeyword:
+          type: string
+          maxLength: 4000
+          example: jtbc봐야지, 구작몰아보기,스타봐야지, 핫클립, 골라봐야지
+          description: 
+            검색키워드 (,로 구분하여 입력) <br>
+            방송사에서 입력해주는 값 그대로 전달하기에, 필요에 따라 trim 필요
+        hashtag:
+          type: string
+          maxLength: 1000
+          example: jtbc봐야지, 구작몰아보기,스타봐야지, 핫클립, 골라봐야지
+          description: HashTag (접두사#은 제외하고 ,로 구분하여 입력) <br>
+            방송사에서 입력해주는 값 그대로 전달하기에, 필요에 따라 trim 필요
+        startdate:
+          type: string
+          maxLength: 8
+          example: ""
+          description: 방송시작일 8자리 (20120601) – 미정일 경우 00000000
+        enddate:
+          type: string
+          maxLength: 8
+          example: ""
+          description: 방송종료일 8자리 (20120607)
+        weekcode:
+          type: string
+          maxLength: 7
+          example: 1111100
+          description: 방송요일 7자리 첫자리는 월요일 (예. 0011000 – 수목) (영화는 1111111)
+        starttime:
+          type: string
+          maxLength: 4
+          example: 0000
+          description: 방송시작시간 4자리 (2000) (영화는 0000)
+        endtime:
+          type: string
+          maxLength: 4
+          example: 0000
+          description: 방송종료시간 4자리 (2050) (영화는 0000)
+        regdate:
+          type: string
+          maxLength: 14
+          example: 20190430141159
+          description: 등록일시 14자리 (20120603153321 – 2012년 6월 3일 15시 33분 21초)
+        modifydate:
+          type: string
+          maxLength: 14
+          example: 20260820175347
+          description: 수정일시 14자리 (20120603153321 – 없을때는 등록일시와 같다)
+        homepageurl:
+          type: string
+          maxLength: 500
+          example: https://tv.jtbc.co.kr/voyage
+          description: 방송사 홈페이지 주소
+        reviewurl:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 방송사 다시보기 주소
+        bbsurl:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 방송사 게시판 주소
+        cpid:
+          type: string
+          maxLength: 2
+          example: CE
+          description: |
+            CP코드
+            - C1: SBS
+            - C2: MBC
+            - C3: KBS
+            - CC: TV조선
+            - CD: 채널A
+            - CE: JTBC
+            - CF: MBN
+            - CJ: OBS
+            - CK: KNN
+            - CW: ENA
+        programimg:
+          type: string
+          maxLength: 500
+          example: https://fs.jtbc.co.kr/joydata/CP00000001/prog/media/voyage/img/20220106_105526_576.jpg
+          description: 프로그램 16:9 대표 이미지 URL <br>
+            (JPG, 16:9 권장사이즈 - 1280*720 최소사이즈 - 640*360)
+        programposterimg:
+          type: string
+          maxLength: 500
+          example: https://fs.jtbc.co.kr/joydata/CP00000001/prog/media/voyage/img/20220106_105527_882.jpg
+          description: 프로그램 포스터(세로형) 이미지 URL <br>
+            (JPG, 권장사이즈 – 최소사이즈 - 194*279 )
+        programbannerimg:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 프로그램 베너 이미지 URL <br>
+            (JPG, 권장사이즈 – 1248*300 )
+        programthumimg:
+          type: string
+          maxLength: 500
+          example: https://fs.jtbc.co.kr/joydata/CP00000001/prog/media/voyage/img/20220106_105527_957.jpg
+        programcoverimg:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 고화질 세로형 이미지 URL <br>
+            (JPG, 고정 사이즈 – 1500*2240)
+        programlogoimg:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 프로그램 로고이미지
+        linktitle1:
+          type: string
+          maxLength: 500
+          example: "[JTBC Voyage] 바로가기"
+          description: 링크제목 1
+        linkurl1:
+          type: string
+          maxLength: 500
+          example: https://tv.naver.com/jtbc.voyage
+          description: 링크URL 1
+        linktitle2:
+          type: string
+          maxLength: 500
+          example: "[DRAMA Voyage] 바로가기"
+          description: 링크제목 2
+        linkurl2:
+          type: string
+          maxLength: 500
+          example: https://tv.naver.com/jtbc.dramavoyage
+          description: 링크URL 2
+        linktitle3:
+          type: string
+          maxLength: 500
+          example: "[TV 속 노래모음 DJ티비씨] 바로가기"
+          description: 링크제목 3
+        linkurl3:
+          type: string
+          maxLength: 500
+          example: https://tv.naver.com/jtbc.DJTBC
+          description: 링크URL 3
+        actor:
+          type: string
+          maxLength: 500
+          example: 없음
+          description: 출연진 ( , 로 구분) <br>
+            방송사에서 입력해주는 값 그대로 전달하기에, 필요에 따라 trim 필요 <br>
+            없을 경우 emptyString 혹은 "없음"으로 전달
+        director:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 연출진 ( , 로 구분) <br>
+            방송사에서 입력해주는 값 그대로 전달하기에, 필요에 따라 trim 필요
+        writer:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 작가 ( , 로 구분)
+            방송사에서 입력해주는 값 그대로 전달하기에, 필요에 따라 trim 필요
+        targetnation:
+          type: string
+          maxLength: 1000
+          example: ""
+          description: |
+            허용국가코드 (모든 국가 허용이면 emptyString 값으로 / 복수국가 허용 시 ,로 구분 – KR,JP,CN) <br> 
+            국가코드 : ISO 3166-1 two character(alpha-2) Country Code (예: 대한민국 – KR)
+        limitnation:
+            type: string
+            maxLength: 1000
+            example: ""
+            description: |
+              제한국가 설정 (특정국가 제한시에 사용 / 복수국사 허용시 , 로 구분 – KR.JP) <br>
+              국가코드 : ISO 3166-1 two character(alpha-2) Country Code (예: 대한민국 – KR) <br>
+              Limitnation과 targetnation 은 둘중에 하나의 값만 사용
+        language:
+          type: string
+          maxLength: 10
+          example: ""
+          description: 예) ko_KR
+        masterclipid:
+          type: string
+          maxLength: 100
+          example: J01_VO10939548
+          description: 프로그램 대표 클립ID (채널ID+ “_” + 방송사별클립ID )
+        isuse:
+          type: string
+          maxLength: 1
+          example: Y
+          description: |
+            사용 여부 (Y : 사용, N : 미사용)
+          enum: 
+            - Y
+            - N
+        pcbannerimgurl:
+          type: string
+          maxLength: 500
+          example: http://smc-cms-production.smartmediarep.com/UploadFiles/Brand/ProgramBanner/20268126718_Web.png
+          description: 배너이미지 주소 (PC)
+        pclinkurl:
+          type: string
+          maxLength: 500
+          example: https://tv.naver.com/sbs.SD243062
+          description: 배너링크 (PC)
+        mobilebannerimgurl:
+          type: string
+          maxLength: 500
+          example: http://smc-cms-production.smartmediarep.com/UploadFiles/Brand/ProgramBanner/20268126718_Mobile.png
+          description: 배너이미지 주소 (모바일)
+        mobilelinkurl:
+          type: string
+          maxLength: 500
+          example: https://tv.naver.com/sbs.SD243062
+          description: 배너링크 (모바일)
+        
+    Clip:
+      type: object
+      required:
+        - programid
+        - clipid
+        - title
+        - itemtypeid
+        - cliptype
+        - regdate
+        - modifydate
+        - clipcategory
+        - contentimg
+        - playtime
+        - adlink
+        - contentnumber
+        - broaddate
+        - isuse
+      properties:
+        programid:
+          type: string
+          maxLength: 100
+          example: MK1_PR992
+          description: 프로그램ID (Programinfo에 정의된ID)
+        channelid:
+          type: string
+          maxLength: 3
+          example: MK1
+          description: 등록 채널 구분 코드 (정산분류용)
+        contentid:
+          type: string
+          maxLength: 100
+          example: MK1_1427269
+          description: 회차 ID
+        contenttitle:
+          type: string
+          maxLength: 500
+          example: "매일아침 267회 - 2026.08.25"
+          description: 회차 제목 (일반 회차의 경우 16과 같이 회차 번호가 부여되고 회차 타이틀이 있을 경우는 회차 타이틀로 기재 )
+        cornerid:
+          type: string
+          example: 0
+          description: 부회차 ID (단일회차는 1) - 숫자 형태로 표시(Integer)
+        cliporder:
+          type: string
+          example: 0
+          description: 회차별 클립 순서 - 숫자 형태로 표시(Integer)
+        clipid:
+          type: string
+          maxLength: 100
+          example: MK1_P1071568
+          description: (채널ID+ “_” + 방송사 원 클립ID)
+        title:
+          type: string
+          maxLength: 500
+          example: 매일아침 [267회] MBN 260825 방송
+          description: 클립영상 제목
+        synopsis:
+          type: string
+          maxLength: 4000
+          example: "MBN ＜매일아침＞ 화요일 오전 9시30분"
+          description: 프로그램 설명
+        searchkeyword:
+          type: string
+          maxLength: 4000
+          example: 매일, 아침, 매일아침, 한혜원, 고선영, 이정수
+          description: 
+            검색키워드 (,로 구분하여 입력) <br>
+            방송사에서 입력해주는 값 그대로 전달하기에, 필요에 따라 trim 필요
+        hashtag:
+          type: string
+          maxLength: 4000
+          example: 매일, 아침, 매일아침, 한혜원, 고선영, 이정수
+          description: HashTag (접두사#은 제외하고 ,로 구분하여 입력) <br>
+            방송사에서 입력해주는 값 그대로 전달하기에, 필요에 따라 trim 필요
+        mediaurl:
+          type: string
+          maxLength: 500
+          example: /vod2/992/2026/08/24/20260824145532_22_992_1071568_1080_t35.mp4
+          description: 영상 play URL (방송사경로. 원타임URL 생성시 필요값)
+        itemtypeid:
+          type: string
+          example: "35"
+          description: |
+            미디어 종류 (원본입수 화질 id)  - 숫자 형태로 표시(Integer)
+            - 31: 270p 일반화질
+            - 32: 360p 일반화질
+            - 33: 480p 고화질
+            - 34: 720p HD
+            - 35: 1080p FullHD
+            - 37: 2160p UHD
+        cliptype:
+          type: string
+          maxLength: 2
+          example: "T2"
+          description: |
+              clip 타입정보
+               - T2: 예고편
+               - T3: 촬영장스케치
+               - TZ: 클립영상
+               - TH: 하이라이트
+               - TI: 인터뷰
+               - TS: 기획 클립
+               - TT: 구작
+               - T6: 숏폼 클립
+        clipcategory:
+          type: string
+          maxLength: 2
+          example: "05"
+          description: | 
+              클립 카테고리
+               - 01: 드라마/영화
+               - 02: 예능
+               - 03: 뮤직
+               - 04: 시사
+               - 05: 교양
+               - 06: 라이프
+               - 07: 스포츠
+               - 08: 게임
+               - 09: 어린이
+               - 10: 뉴스
+               - 11: 애니메이션
+        subcategory:
+          type: string
+          maxLength: 100
+          example: ""
+          description: 각 사별 추가 카테고리 구분 필요에 따라 추가 (예. 패션, 자동차 등)
+        regdate:
+          type: string
+          maxLength: 14
+          example: 20260824145522
+          description: 등록일시 14자리 (20120603153321 – 2012년 6월 3일 15시 33분 21초)
+        modifydate:
+          type: string
+          maxLength: 14
+          example: 20260824145653
+          description: 수정일시 14자리 (20120603153321 – 없을때는 등록일시와 같다)
+        reservedate:
+          type: string
+          maxLength: 14
+          example: ""
+          description: 예약노출일시 14자리 (20120603153321 – 2012년 6월 3일 15시 33분 21초)
+        contentimg:
+          type: string
+          maxLength: 500
+          example: http://img.vod.mbn.co.kr/vod2/992/2026/08/24/20260824145532_22_992_1071568_1080_7.jpg
+          description: 클립영상 대표 이미지 URL <br>
+            (JPG, 16:9 권장사이즈 - 1280*720 최소사이즈 - 640*360)
+        playtime:
+          type: string
+          example: "60"
+          description: |
+            플레이 시간 (단위: 초)
+        starttime:
+          type: string
+          example: "0"
+          description: | 
+            구간재생 시작 시간 (단위: 초)
+        endtime:
+          type: string
+          example: "0"
+          description: |
+            구간재생 종료 시간 (단위: 초)
+        targetnation:
+          type: string
+          maxLength: 1000
+          example: "KR"
+          description: |
+            허용국가코드 (모든 국가 허용이면 emptyString 값으로 / 복수국가 허용 시 ,로 구분 – KR,JP,CN) <br> 
+            국가코드 : ISO 3166-1 two character(alpha-2) Country Code (예: 대한민국 – KR)
+        limitnation:
+            type: string
+            maxLength: 1000
+            example: ""
+            description: |
+              제한국가 설정 (특정국가 제한시에 사용 / 복수국사 허용시 , 로 구분 – KR.JP) <br>
+              국가코드 : ISO 3166-1 two character(alpha-2) Country Code (예: 대한민국 – KR) <br>
+              Limitnation과 targetnation 은 둘중에 하나의 값만 사용
+        targetage:
+          type: string
+          example: "0"
+          description: |
+            시청가능나이 - 숫자 형태로 표시(Integer)
+              - 0: all
+              - 7
+              - 12
+              - 15
+              - 19
+        returnlink:
+          type: string
+          example: ""
+          description: 클립영상 리턴 패스 URL
+        linktitle1:
+          type: string
+          maxLength: 500
+          example: "'매일아침' 공식 홈페이지"
+          description: 링크제목 1
+        linkurl1:
+          type: string
+          maxLength: 500
+          example: https://www.mbn.co.kr/vod/programMain/992
+          description: 링크URL 1
+        linktitle2:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 링크제목 2
+        linkurl2:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 링크URL 2
+        linktitle3:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 링크제목 3
+        linkurl3:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 링크URL 3
+        linktitle4:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 링크제목 4
+        linkurl4:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 링크URL 4
+        linktitle5:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 링크제목 5
+        linkurl5:
+          type: string
+          maxLength: 500
+          example: ""
+          description: 링크URL 5
+        adlink:
+          type: string
+          maxLength: 300
+          example: cpid=CF&channelid=MK1&category=01§ion=03&programid=MK1_PR992&clipid=MK1_P1071568&contentnumber=267&targetnation=KR&isonair=Y&ispay=N&vodtype=C&broaddate=20260825&playtime=60&starttime=0&endtime=0
+          description: 광고 호출 링크
+        ismasterclip:
+          type: string
+          maxLength: 1
+          example: "Y"
+          description: |
+            프로그램 내 대표 클립 영상 지정 (Y: 대표클립 지정, N: 미지정-default)
+        language:
+          type: string
+          maxLength: 10
+          example: ""
+          description: 예) ko_KR
+        isfullvod:
+          type: string
+          maxLength: 1
+          example: N
+          description: |
+            Full VOD 여부 (Y : fullvod, N : clip영상)
+          enum: 
+            - Y
+            - N
+        isuse:
+          type: string
+          maxLength: 1
+          example: Y
+          description: |
+            사용 여부 (Y : 사용, N : 미사용)
+          enum: 
+            - Y
+            - N
+        broaddate:
+          type: string
+          maxLength: 14
+          example: 20260825093000
+          description: 방영일시 14자리 (20120603153321
+        contentnumber:
+          type: string
+          example: 267
+          description: 회차 번호
+        sportscomment:
+          type: string
+          example: ""
+          description: 네이버 스포츠 연동용 컬럼
+      xml:
+        name: order
