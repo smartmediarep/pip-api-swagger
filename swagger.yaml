@@ -1,9 +1,10 @@
 openapi: 3.0.4
 info:
   title: SMC-동영상포탈 PIP 연동 API
-  description: SMR의 프로그램, 클립 메타데이터를 조회하는 API 입니다. <br>
+  description: SMR의 프로그램(programinfo), 클립(clipmediainfo) 메타데이터를 조회하는 API 입니다. <br>
     - 운영시 5분에 1회 호출을 권장합니다. <br>
-    - feed정보는 최대 1000개로 제한됩니다.
+    - feed정보는 최대 1000개로 제한됩니다. <br> <br> programlist는 마이그레이션용 API 입니다.
+  
     
   contact:
     email: yerimlee@smartmediarep.com
@@ -15,6 +16,8 @@ tags:
     description: 프로그램 정보 (programinfo)
   - name: clip
     description: 클립영상 정보 (clipmediainfo)
+  - name: programlist
+    description: 프로그램 목록 (programlist)
     
 paths:
   /programinfo:
@@ -50,7 +53,6 @@ paths:
               - CF
               - CJ
               - CK
-              - CW
         - name: programid
           in: query
           description: 필터링하고자하는 프로그램ID 입니다.
@@ -121,7 +123,6 @@ paths:
               - CF
               - CJ
               - CK
-              - CW
         - name: programid
           in: query
           description: 필터링하고자하는 프로그램ID 입니다. (programinfo에서 정의된 ID) <br>
@@ -161,6 +162,80 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Clip'
+        '405':
+          description: Invalid status value
+        5XX: 
+          description: Unexpected error
+  
+  /programlist:
+    get:
+      tags:
+        - programlist
+      summary: 프로그램목록 조회
+      description:  |
+       프로그램 목록을 조회합니다. <br>
+       **2026년 7월 1일 이후 생성된 클립의 프로그램이 필터링 되어있습니다.**  <br>
+       필드의 빈값은 기본적으로 emptyString으로 반환합니다. 예외케이스의 경우 각 필드의 description에서 설명합니다. <br>
+       마이그레이션 혹은 정합을 위한 API입니다.
+      parameters:
+        - name: cpid
+          in: query
+          description: 필터링하고자하는 방송사의 코드값입니다.
+          required: false
+          schema:
+            type: string
+            enum:
+              - C1
+              - C2
+              - C3
+              - CC
+              - CD
+              - CE
+              - CF
+              - CJ
+              - CK
+        - name: channelid
+          in: query
+          description: 필터링하고자하는 SMR 채널ID 값입니다. <br>
+          required: false
+          schema:
+            type: string
+        - name: brandcode
+          in: query
+          description: 필터링하고자하는 SMR 브랜드코드입니다. <br>
+          required: false
+          schema:
+              type: string
+        - name: pagesize
+          in: query
+          description: 
+          required: false
+          schema:
+              type: integer
+              default: 20
+        - name: pagenum
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+
+      responses:
+        '200':
+          description: |
+            successful operation
+            (참고: 실제 응답 Content-Type이 text/html로 오나, 바디는 JSON 형식입니다)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Programlist'
+            text/html: 
+              schema: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/Programlist'
         '405':
           description: Invalid status value
         5XX: 
@@ -214,7 +289,7 @@ components:
           maxLength: 50
           example: jtbc
           description: 각 방송사의 사용 명칭(소문자 알파벳, 공백 특수문자 없음) <br>
-                       sbs / mbc / tvchosun / channela / jtbc / mbn / cjenm
+                       sbs / mbc / tvchosun / channela / jtbc / mbn 
         programcode:
           type: string
           maxLength: 50
@@ -364,7 +439,6 @@ components:
             - CF: MBN
             - CJ: OBS
             - CK: KNN
-            - CW: ENA
         programimg:
           type: string
           maxLength: 500
@@ -796,3 +870,104 @@ components:
           description: 네이버 스포츠 연동용 컬럼
       xml:
         name: order
+
+    Programlist:
+      type: object
+      required:
+        - programid
+        - brandcode
+        - brandname
+        - corporatorcode
+        - channelid
+        - cpid
+        - title
+        - isuse
+        - regdate
+        - modifydate
+      properties:
+        totalPages:
+          type: integer
+          example: 3
+        totalElements:
+          type: integer
+          example: 48
+        number:
+          type: integer
+          example: 1
+        size:
+          type: integer
+          example: 20
+        numberOfElements:
+          type: integer
+          example: 20
+        content:
+          type: array
+          items:
+            type: object
+            properties:  
+              programid:
+                type: string
+                maxLength: 100
+                example: J01_PR10011045
+                description: 프로그램ID (채널ID+ "_" + 방송사 원 ProgramdID) *채널ID는 아래정의
+              brandcode:
+                type: string
+                maxLength: 100
+                example: 260
+                description: 방송사 코드
+              brandname:
+                type: string
+                description: 브랜드명
+              corporatorcode:
+                type: string
+                maxLength: 50
+                example: jtbc
+                description: 각 방송사의 사용 명칭(소문자 알파벳, 공백 특수문자 없음) <br>
+                            sbs / mbc / tvchosun / channela / jtbc / mbn 
+              title:
+                type: string
+                maxLength: 500
+                example: JTBC Voyage(봐야지)
+                description: 프로그램명
+              channelid:
+                type: string
+                maxLength: 3
+                example: J01
+                description: 등록 채널 구분 코드 (정산분류용)
+              cpid:
+                type: string
+                maxLength: 2
+                example: CE
+                description: |
+                  CP코드
+                  - C1: SBS
+                  - C2: MBC
+                  - C3: KBS
+                  - CC: TV조선
+                  - CD: 채널A
+                  - CE: JTBC
+                  - CF: MBN
+                  - CJ: OBS
+                  - CK: KNN
+              isuse:
+                type: string
+                maxLength: 1
+                example: Y
+                description: |
+                  사용 여부 (Y : 사용, N : 미사용)
+                enum: 
+                  - Y
+                  - N
+              regdate:
+                type: string
+                maxLength: 14
+                example: 20260824145522
+                description: 등록일시 14자리 (20120603153321 – 2012년 6월 3일 15시 33분 21초)
+              modifydate:
+                type: string
+                maxLength: 14
+                example: 20260824145653
+                description: 수정일시 14자리 (20120603153321 – 없을때는 등록일시와 같다)
+
+
+
